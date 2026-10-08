@@ -6,40 +6,43 @@
     <title>Digital Business Card</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Poppins', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .card-container { background: #fff; width: 100%; max-width: 400px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; text-align: center; padding-bottom: 25px; }
-        .card-header { background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; padding: 30px 20px; }
-        .card-header h2 { margin: 10px 0 5px; font-size: 24px; }
-        .card-header p { margin: 0; opacity: 0.9; font-size: 14px; }
-        .card-body { padding: 20px; }
-        .info-item { background: #f8fafc; margin: 10px 0; padding: 12px; border-radius: 10px; font-weight: 600; color: #334155; }
-        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
-        .btn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; text-decoration: none; color: white; display: inline-block; }
-        .btn-call { background: #22c55e; }
+        body { font-family: 'Poppins', sans-serif; background: #0f172a; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .card-container { background: #ffffff; width: 100%; max-width: 400px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); overflow: hidden; text-align: center; padding-bottom: 30px; }
+        .card-header { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 40px 20px; position: relative; }
+        .avatar { width: 80px; height: 80px; background: #fff; color: #1d4ed8; font-size: 28px; font-weight: bold; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin: 0 auto 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .card-header h2 { margin: 5px 0; font-size: 22px; }
+        .card-header p { margin: 0; opacity: 0.9; font-size: 14px; background: rgba(255,255,255,0.2); display: inline-block; padding: 4px 12px; border-radius: 20px; margin-top: 5px;}
+        .card-body { padding: 25px 20px; }
+        .info-item { background: #f8fafc; margin: 12px 0; padding: 14px; border-radius: 12px; font-weight: 600; color: #334155; display: flex; align-items: center; justify-content: space-between; border: 1px solid #e2e8f0; font-size: 14px; }
+        .btn-group { display: flex; gap: 10px; margin-top: 25px; }
+        .btn { flex: 1; padding: 12px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; text-decoration: none; color: white; display: inline-block; font-size: 14px; }
+        .btn-call { background: #16a34a; }
         .btn-whatsapp { background: #25d366; }
-        .btn-share { background: #3b82f6; width: 100%; margin-top: 10px; }
+        .btn-share { background: #2563eb; width: 100%; margin-top: 12px; }
     </style>
 </head>
 <body>
 
-    <div class="card-container" id="cardBox">
+    <div class="card-container">
         <div class="card-header">
+            <div class="avatar" id="avatarText">DC</div>
             <h2 id="userName">लोड हो रहा है...</h2>
-            <p id="businessName">व्यवसाय का नाम</p>
+            <p id="businessName">व्यवसाय</p>
         </div>
         <div class="card-body">
-            <div class="info-item" id="phoneDisplay">📞 0000000000</div>
+            <div class="info-item"><span>पद (Designation):</span> <strong id="desigText">-</strong></div>
+            <div class="info-item"><span>मोबाइल:</span> <strong id="phoneText">-</strong></div>
+            <div class="info-item"><span>ईमेल:</span> <strong id="emailText">-</strong></div>
             
             <div class="btn-group">
-                <a href="#" id="callBtn" class="btn btn-call">कॉर्ल करें</a>
-                <a href="#" id="waBtn" class="btn btn-whatsapp">WhatsApp</a>
+                <a href="#" id="callBtn" class="btn btn-call">📞 कॉल करें</a>
+                <a href="#" id="waBtn" class="btn btn-whatsapp">💬 WhatsApp</a>
             </div>
-            <button onclick="shareCard()" class="btn btn-share">कार्ड शेयर करें 🚀</button>
+            <button onclick="shareCard()" class="btn btn-share">🔗 कार्ड शेयर करें</button>
         </div>
     </div>
 
     <script>
-        // URL से यूजर का ID या फोन नंबर लेकर डेटा लोड करना
         const urlParams = new URLSearchParams(window.location.search);
         const cardId = urlParams.get('id');
 
@@ -48,11 +51,16 @@
                 .then(res => res.json())
                 .then(data => {
                     if(data.success) {
-                        document.getElementById('userName').innerText = data.card.fullName;
-                        document.getElementById('businessName').innerText = data.card.businessName;
-                        document.getElementById('phoneDisplay').innerText = "📞 " + data.card.phone;
-                        document.getElementById('callBtn').href = "tel:" + data.card.phone;
-                        document.getElementById('waBtn').href = `https://wa.me/91${data.card.phone}?text=Hello%20${data.card.fullName}`;
+                        const card = data.card;
+                        document.getElementById('userName').innerText = card.fullName;
+                        document.getElementById('businessName').innerText = card.businessName || 'Digital Business Card';
+                        document.getElementById('desigText').innerText = card.designation || 'Self';
+                        document.getElementById('phoneText').innerText = card.phone;
+                        document.getElementById('emailText').innerText = card.email || 'N/A';
+                        document.getElementById('avatarText').innerText = card.fullName.substring(0, 2).toUpperCase();
+                        
+                        document.getElementById('callBtn').href = "tel:" + card.phone;
+                        document.getElementById('waBtn').href = `https://wa.me/91${card.phone}?text=Hello%20${card.fullName},%20I%20saw%20your%20Digital%20Business%20Card!`;
                     } else {
                         alert('कार्ड नहीं मिला!');
                     }
@@ -66,10 +74,10 @@
                     url: window.location.href
                 }).catch(console.error);
             } else {
-                alert('लिंक कॉपी कर ली गई है!');
+                navigator.clipboard.writeText(window.location.href);
+                alert('कार्ड की लिंक कॉपी हो गई है!');
             }
         }
     </script>
 </body>
 </html>
-
