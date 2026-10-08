@@ -2,16 +2,16 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cron = require('node-cron');
 const path = require('path');
-const cors = require('cors'); // 1. CORS पैकेज इंपोर्ट किया
+const cors = require('cors');
 
 const app = express();
 
-// 2. CORS और Middlewares सही जगह लगाए गए
+// Middlewares
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Configuration Constants (21 रुपये का पूरा गणित)
+// Configuration Constants (21 रुपये का पूरा गणित और स्प्लिट)
 const ADMIN_UPI = 'Ramji91221m@okicici';
 const CARD_FEE = 21;
 const ADMIN_SHARE = 5;
@@ -28,15 +28,15 @@ mongoose.connect(MONGO_URI, {
 
 // MongoDB Schemas
 const userSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
+  fullName: { type: String, required: true },
+  email: { type: String, required: true },
   phone: { type: String, required: true },
   upiId: { type: String, required: true },
+  designation: { type: String, default: 'Self' },
+  businessName: { type: String, default: 'Digital Business Card' },
   referralCode: { type: String, unique: true },
   referredBy: { type: String, default: null },
-  designation: { type: String, default: 'Member' },
-  companyName: { type: String, default: 'Digital Business Card' },
-  status: { type: String, enum: ['ACTIVE', 'EXPIRED', 'PENDING'], default: 'PENDING' },
+  status: { type: String, enum: ['ACTIVE', 'EXPIRED', 'PENDING'], default: 'ACTIVE' },
   expiryDate: { type: Date },
   createdAt: { type: Date, default: Date.now }
 });
@@ -49,7 +49,7 @@ const transactionSchema = new mongoose.Schema({
   serverFee: { type: Number, default: 6 },
   adminUpi: { type: String, default: ADMIN_UPI },
   uplineUpi: { type: String },
-  status: { type: String, enum: ['SUCCESS', 'FAILED', 'PENDING'], default: 'PENDING' },
+  status: { type: String, enum: ['SUCCESS', 'FAILED', 'PENDING'], default: 'SUCCESS' },
   type: { type: String, enum: ['REGISTRATION', 'RENEWAL'] },
   timestamp: { type: Date, default: Date.now }
 });
@@ -62,19 +62,19 @@ function generateReferralCode() {
   return 'SDC' + Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
-// Root Route (चेक करने के लिए कि सर्वर चालू है)
+// Root Route
 app.get('/', (req, res) => {
   res.send('Smart Digital Card Server is Running Live!');
 });
 
-// API Routes - नया रजिस्ट्रेशन और पैसे का ऑटो-बंटवारा
-app.post('/api/register', async (req, res) => {
+// 1. नया कार्ड रजिस्ट्रेशन और पेमेंट ऑटो-स्प्लिट राउट (/api/create-card)
+app.post('/api/create-card', async (req, res) => {
   try {
-    const { name, email, phone, upiId, referredBy, designation, companyName } = req.body;
+    const { fullName, email, phone, upiId, designation, businessName, referralCode: refCode } = req.body;
     
     let uplineUser = null;
-    if (referredBy) {
-      uplineUser = await User.findOne({ referralCode: referredBy, status: 'ACTIVE' });
+    if (refCode && refCode !== 'SDC000000') {
+      uplineUser = await User.findOne({ referralCode: refCode, status: 'ACTIVE' });
     }
     
     const referralCode = generateReferralCode();
@@ -82,25 +82,42 @@ app.post('/api/register', async (req, res) => {
     expiryDate.setFullYear(expiryDate.getFullYear() + 1); // 1 साल की वैलिडिटी
 
     const newUser = new User({
-      name, email, phone, upiId, referralCode,
-      referredBy: uplineUser ? referredBy : null,
-      designation, companyName, status: 'ACTIVE', expiryDate
+      fullName: fullName || 'User',
+      email: email || 'user@example.com',
+      phone: phone || '0000000000',
+      upiId: upiId || ADMIN_UPI,
+      designation: designation || 'Self',
+      businessName: businessName || 'Digital Business Card',
+      referralCode,
+      referredBy: uplineUser ? refCode : null,
+      status: 'ACTIVE',
+      expiryDate
     });
-    await newUser.save();
+    
+    const savedUser = await newUser.save();
 
     // अपलाइन कमीशन के लिए टारगेट UPI (अगर अपलाइन नहीं है तो एडमिन UPI)
     const targetUplineUpi = uplineUser ? uplineUser.upiId : ADMIN_UPI;
 
     // Transaction Record
     const transaction = new Transaction({
-      userId: newUser._id, totalAmount: CARD_FEE, adminFee: ADMIN_SHARE,
-      uplineFee: UPLINE_SHARE, serverFee: SERVER_SHARE, adminUpi: ADMIN_UPI,
-      uplineUpi: targetUplineUpi, status: 'SUCCESS', type: 'REGISTRATION'
+      userId: savedUser._id, 
+      totalAmount: CARD_FEE, 
+      adminFee: ADMIN_SHARE,
+      uplineFee: UPLINE_SHARE, 
+      serverFee: SERVER_SHARE, 
+      adminUpi: ADMIN_UPI,
+      uplineUpi: targetUplineUpi, 
+      status: 'SUCCESS', 
+      type: 'REGISTRATION'
     });
     await transaction.save();
 
     res.status(201).json({
-      success: true, message: 'User registered & payment split calculated.', user: newUser,
+      success: true, 
+      cardId: savedUser._id,
+      message: 'User registered & payment split calculated successfully.', 
+      user: savedUser,
       paymentSplit: {
         total: CARD_FEE,
         adminAllocation: { amount: ADMIN_SHARE, upi: ADMIN_UPI },
@@ -111,6 +128,17 @@ app.post('/api/register', async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
+});
+
+// 2. आईडी से कार्ड डेटा निकालने का राउट (/api/get-card/:id)
+app.get('/api/get-card/:id', async (req, res) => {
+    try {
+        const card = await User.findById(req.params.id);
+        if(!card) return res.status(404).json({ success: false, message: 'Card not found' });
+        res.json({ success: true, card });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
 });
 
 // ऑटोमैटिक रिन्यूअल चेक (रोज रात 12 बजे चलेगा)
@@ -128,7 +156,7 @@ cron.schedule('0 0 * * *', async () => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`Smart Digital Card Server running on port ${PORT}`);
 });
