@@ -1,1 +1,351 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Digital Card Portal</title>
+  <!-- Google Fonts for Modern Typography -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #F1F5F9;
+      --card-bg: #FFFFFF;
+      --text-main: #0F172A;
+      --text-muted: #64748B;
+      --primary: #2563EB;
+      --primary-hover: #1D4ED8;
+      --accent: #10B981;
+      --border: #E2E8F0;
+      --shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+    
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      padding: 2rem 1rem;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 960px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 820px) {
+      .container { grid-template-columns: 1fr; }
+    }
+
+    .card-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: var(--shadow);
+      position: relative;
+    }
+
+    /* Header & Language Switcher */
+    .header-box {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #F1F5F9;
+    }
+
+    .header-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .lang-btn {
+      background: #EFF6FF;
+      color: var(--primary);
+      border: 1px solid #BFDBFE;
+      padding: 0.4rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .lang-btn:hover {
+      background: var(--primary);
+      color: white;
+    }
+
+    /* Form Design */
+    .form-group { margin-bottom: 1.1rem; }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.75rem 0.9rem;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+      background: #FAFAFA;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: #FFF;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    button.btn-submit {
+      width: 100%;
+      padding: 0.85rem;
+      background: linear-gradient(135deg, #2563EB, #1D4ED8);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+      transition: transform 0.1s ease, box-shadow 0.2s ease;
+      margin-top: 0.5rem;
+    }
+
+    button.btn-submit:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+    }
+
+    /* Payment Split Preview Box */
+    .split-box {
+      background: #F8FAFC;
+      border: 1.5px dashed #CBD5E1;
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-top: 1rem;
+    }
+
+    .split-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-bottom: 1rem;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .split-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.65rem;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    .split-row.total {
+      padding-top: 0.65rem;
+      border-top: 2px solid var(--border);
+      font-weight: 700;
+      color: var(--text-main);
+      font-size: 1rem;
+    }
+
+    .price-tag {
+      background: #DCFCE7;
+      color: #166534;
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Registration Panel -->
+  <div class="card-panel">
+    <div class="header-box">
+      <div class="header-title" id="title-reg">Register Smart Card (₹21)</div>
+      <button type="button" class="lang-btn" id="langToggle" onclick="toggleLanguage()">हिन्दी / English</button>
+    </div>
+
+    <form id="regForm">
+      <div class="form-group">
+        <label id="lbl-name">Full Name / पूरा नाम</label>
+        <input type="text" id="name" required placeholder="e.g. Ram Kumar">
+      </div>
+      <div class="form-group">
+        <label id="lbl-email">Email / ईमेल</label>
+        <input type="email" id="email" required placeholder="example@mail.com">
+      </div>
+      <div class="form-group">
+        <label id="lbl-phone">Phone Number / फोन नंबर</label>
+        <input type="tel" id="phone" required placeholder="9876543210">
+      </div>
+      <div class="form-group">
+        <label id="lbl-upi">Your UPI ID (For Commission) / आपकी UPI ID</label>
+        <input type="text" id="upiId" required placeholder="username@upi">
+      </div>
+      <div class="form-group">
+        <label id="lbl-designation">Designation / पद</label>
+        <input type="text" id="designation" placeholder="e.g. Shop Owner / Student">
+      </div>
+      <div class="form-group">
+        <label id="lbl-company">Company / Business Name / दुकान या संस्था</label>
+        <input type="text" id="companyName" placeholder="e.g. Public Sewa Kendra">
+      </div>
+      <div class="form-group">
+        <label id="lbl-ref">Referral Code (Optional) / रेफरल कोड</label>
+        <input type="text" id="referredBy" placeholder="SDCXXXXXX">
+      </div>
+      <button type="submit" class="btn-submit" id="btn-pay">Pay ₹21 & Activate Card</button>
+    </form>
+  </div>
+
+  <!-- Result Panel -->
+  <div class="card-panel">
+    <div class="header-box">
+      <div class="header-title" id="title-preview">Payment Breakdown</div>
+    </div>
+
+    <p style="font-size:0.875rem; color:var(--text-muted);" id="txt-info">
+      Fill the form to activate your card and view system distribution.
+    </p>
+
+    <div id="paymentSplit" class="split-box" style="display:none;">
+      <div class="split-title" id="split-heading">⚡ ₹21 Auto-Split Calculation</div>
+      <div class="split-row">
+        <span id="txt-admin">Admin Fee (Ramji91221m@okicici)</span>
+        <span class="price-tag">₹5.00</span>
+      </div>
+      <div class="split-row">
+        <span id="uplineLabel">Upline Commission</span>
+        <span class="price-tag">₹10.00</span>
+      </div>
+      <div class="split-row">
+        <span id="txt-server">Server & Infrastructure</span>
+        <span class="price-tag">₹6.00</span>
+      </div>
+      <div class="split-row total">
+        <span id="txt-total">Total Amount</span>
+        <span>₹21.00</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentLang = 'hi';
+
+  const translations = {
+    en: {
+      regTitle: "Register Smart Card (₹21)",
+      previewTitle: "Payment Breakdown",
+      name: "Full Name",
+      email: "Email Address",
+      phone: "Phone Number",
+      upi: "Your UPI ID (For Receiving Commission)",
+      designation: "Designation",
+      company: "Company / Business Name",
+      ref: "Referral Code (Optional)",
+      payBtn: "Pay ₹21 & Activate Card",
+      infoTxt: "Fill the form to activate your card and view system distribution.",
+      splitHeading: "⚡ ₹21 Auto-Split Calculation",
+      adminTxt: "Admin Profit (Ramji91221m@okicici)",
+      serverTxt: "Server & Automation Fee",
+      totalTxt: "Total Amount Paid",
+      alertSuccess: "Registration Successful! Digital Card Generated."
+    },
+    hi: {
+      regTitle: "स्मार्ट कार्ड पंजीकरण (₹21)",
+      previewTitle: "भुगतान का विवरण",
+      name: "पूरा नाम",
+      email: "ईमेल आईडी",
+      phone: "मोबाइल नंबर",
+      upi: "आपकी UPI ID (कमीशन प्राप्त करने के लिए)",
+      designation: "पद / प्रोफेशन",
+      company: "दुकान / कंपनी का नाम",
+      ref: "रेफरल कोड (ऐच्छिक)",
+      payBtn: "₹21 भुगतान करें और कार्ड सक्रिय करें",
+      infoTxt: "कार्ड चालू करने और कमीशन सिस्टम देखने के लिए फॉर्म भरें।",
+      splitHeading: "⚡ ₹21 स्वचालित बंटवारा (Auto-Split)",
+      adminTxt: "एडमिन मुनाफा (Ramji91221m@okicici)",
+      serverTxt: "सर्वर एवं ऑटोमेशन शुल्क",
+      totalTxt: "कुल भुगतान राशि",
+      alertSuccess: "पंजीकरण सफल रहा! डिजिटल कार्ड चालू कर दिया गया है।"
+    }
+  };
+
+  function toggleLanguage() {
+    currentLang = currentLang === 'hi' ? 'en' : 'hi';
+    const lang = translations[currentLang];
+
+    document.getElementById('title-reg').innerText = lang.regTitle;
+    document.getElementById('title-preview').innerText = lang.previewTitle;
+    document.getElementById('lbl-name').innerText = lang.name;
+    document.getElementById('lbl-email').innerText = lang.email;
+    document.getElementById('lbl-phone').innerText = lang.phone;
+    document.getElementById('lbl-upi').innerText = lang.upi;
+    document.getElementById('lbl-designation').innerText = lang.designation;
+    document.getElementById('lbl-company').innerText = lang.company;
+    document.getElementById('lbl-ref').innerText = lang.ref;
+    document.getElementById('btn-pay').innerText = lang.payBtn;
+    document.getElementById('txt-info').innerText = lang.infoTxt;
+    document.getElementById('split-heading').innerText = lang.splitHeading;
+    document.getElementById('txt-admin').innerText = lang.adminTxt;
+    document.getElementById('txt-server').innerText = lang.serverTxt;
+    document.getElementById('txt-total').innerText = lang.totalTxt;
+  }
+
+  document.getElementById('regForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = {
+      name: document.getElementById('name').value,
+      email: document.getElementById('email').value,
+      phone: document.getElementById('phone').value,
+      upiId: document.getElementById('upiId').value,
+      designation: document.getElementById('designation').value,
+      companyName: document.getElementById('companyName').value,
+      referredBy: document.getElementById('referredBy').value || null
+    };
+
+    try {
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(translations[currentLang].alertSuccess);
+        document.getElementById('uplineLabel').innerText = `Upline Commission (${data.paymentSplit.uplineAllocation.upi})`;
+        document.getElementById('paymentSplit').style.display = 'block';
+      } else {
+        alert('Error: ' + data.message);
+      }
+    } catch (err) {
+      alert('Error connecting to backend server.');
+    }
+  });
+</script>
+</body>
+</html>
 
