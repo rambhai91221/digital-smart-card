@@ -1,11 +1,13 @@
-const cors = require('cors');
-app.use(cors());
 const express = require('express');
 const mongoose = require('mongoose');
 const cron = require('node-cron');
 const path = require('path');
+const cors = require('cors'); // 1. CORS पैकेज इंपोर्ट किया
+
 const app = express();
 
+// 2. CORS और Middlewares सही जगह लगाए गए
+app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -17,7 +19,8 @@ const UPLINE_SHARE = 10;
 const SERVER_SHARE = 6;
 
 // Database Connection (MongoDB)
-mongoose.connect('mongodb://localhost:27017/digital_card_mlm', {
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/digital_card_mlm';
+mongoose.connect(MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 }).then(() => console.log('MongoDB Connected Successfully'))
@@ -58,6 +61,11 @@ const Transaction = mongoose.model('Transaction', transactionSchema);
 function generateReferralCode() {
   return 'SDC' + Math.random().toString(36).substring(2, 8).toUpperCase();
 }
+
+// Root Route (चेक करने के लिए कि सर्वर चालू है)
+app.get('/', (req, res) => {
+  res.send('Smart Digital Card Server is Running Live!');
+});
 
 // API Routes - नया रजिस्ट्रेशन और पैसे का ऑटो-बंटवारा
 app.post('/api/register', async (req, res) => {
@@ -124,4 +132,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Smart Digital Card Server running on port ${PORT}`);
 });
-
