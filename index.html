@@ -175,6 +175,38 @@
       border-radius: 6px;
       font-weight: 700;
     }
+
+    /* Card Output Action Box */
+    .card-output-box {
+      margin-top: 1.25rem;
+      padding: 1.25rem;
+      background: #F0FDF4;
+      border: 2px solid #22C55E;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .btn-action {
+      display: inline-block;
+      width: 100%;
+      padding: 0.75rem;
+      margin-top: 0.5rem;
+      border-radius: 8px;
+      font-weight: 700;
+      text-decoration: none;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+
+    .btn-card-view {
+      background: #2563EB;
+      color: white;
+    }
+
+    .btn-upi-pay {
+      background: #16A34A;
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -183,71 +215,81 @@
   <!-- Registration Panel -->
   <div class="card-panel">
     <div class="header-box">
-      <div class="header-title" id="title-reg">Register Smart Card (₹21)</div>
+      <div class="header-title" id="title-reg">स्मार्ट कार्ड पंजीकरण (₹21)</div>
       <button type="button" class="lang-btn" id="langToggle" onclick="toggleLanguage()">हिन्दी / English</button>
     </div>
 
     <form id="regForm">
       <div class="form-group">
-        <label id="lbl-name">Full Name / पूरा नाम</label>
-        <input type="text" id="name" required placeholder="e.g. Ram Kumar">
+        <label id="lbl-name">पूरा नाम / Full Name</label>
+        <input type="text" id="name" required placeholder="उदा. Ram Kumar">
       </div>
       <div class="form-group">
-        <label id="lbl-email">Email / ईमेल</label>
+        <label id="lbl-email">ईमेल आईडी / Email Address</label>
         <input type="email" id="email" required placeholder="example@mail.com">
       </div>
       <div class="form-group">
-        <label id="lbl-phone">Phone Number / फोन नंबर</label>
+        <label id="lbl-phone">मोबाइल नंबर / Phone Number</label>
         <input type="tel" id="phone" required placeholder="9876543210">
       </div>
       <div class="form-group">
-        <label id="lbl-upi">Your UPI ID (For Commission) / आपकी UPI ID</label>
+        <label id="lbl-upi">आपकी UPI ID (कमीशन प्राप्त करने के लिए)</label>
         <input type="text" id="upiId" required placeholder="username@upi">
       </div>
       <div class="form-group">
-        <label id="lbl-designation">Designation / पद</label>
-        <input type="text" id="designation" placeholder="e.g. Shop Owner / Student">
+        <label id="lbl-designation">पद / Designation</label>
+        <input type="text" id="designation" placeholder="उदा. Shop Owner / Student">
       </div>
       <div class="form-group">
-        <label id="lbl-company">Company / Business Name / दुकान या संस्था</label>
-        <input type="text" id="companyName" placeholder="e.g. Public Sewa Kendra">
+        <label id="lbl-company">दुकान / कंपनी का नाम</label>
+        <input type="text" id="companyName" placeholder="उदा. Public Sewa Kendra">
       </div>
       <div class="form-group">
-        <label id="lbl-ref">Referral Code (Optional) / रेफरल कोड</label>
+        <label id="lbl-ref">रेफरल कोड (ऐच्छिक)</label>
         <input type="text" id="referredBy" placeholder="SDCXXXXXX">
       </div>
-      <button type="submit" class="btn-submit" id="btn-pay">Pay ₹21 & Activate Card</button>
+      <button type="submit" class="btn-submit" id="btn-pay">₹21 भुगतान करें और कार्ड सक्रिय करें</button>
     </form>
   </div>
 
   <!-- Result Panel -->
   <div class="card-panel">
     <div class="header-box">
-      <div class="header-title" id="title-preview">Payment Breakdown</div>
+      <div class="header-title" id="title-preview">भुगतान का विवरण</div>
     </div>
 
     <p style="font-size:0.875rem; color:var(--text-muted);" id="txt-info">
-      Fill the form to activate your card and view system distribution.
+      कार्ड चालू करने और कमीशन सिस्टम देखने के लिए फॉर्म भरें।
     </p>
 
+    <!-- BreakDown Box -->
     <div id="paymentSplit" class="split-box" style="display:none;">
-      <div class="split-title" id="split-heading">⚡ ₹21 Auto-Split Calculation</div>
+      <div class="split-title" id="split-heading">⚡ ₹21 स्वचालित बंटवारा (Auto-Split)</div>
       <div class="split-row">
-        <span id="txt-admin">Admin Fee (Ramji91221m@okicici)</span>
+        <span id="txt-admin">एडमिन मुनाफा (Ramji91221m@okicici)</span>
         <span class="price-tag">₹5.00</span>
       </div>
       <div class="split-row">
-        <span id="uplineLabel">Upline Commission</span>
+        <span id="uplineLabel">अपलाइन कमीशन</span>
         <span class="price-tag">₹10.00</span>
       </div>
       <div class="split-row">
-        <span id="txt-server">Server & Infrastructure</span>
+        <span id="txt-server">सर्वर एवं ऑटोमेशन शुल्क</span>
         <span class="price-tag">₹6.00</span>
       </div>
       <div class="split-row total">
-        <span id="txt-total">Total Amount</span>
+        <span id="txt-total">कुल भुगतान राशि</span>
         <span>₹21.00</span>
       </div>
+    </div>
+
+    <!-- Output Box for Card Link -->
+    <div id="cardOutput" class="card-output-box" style="display:none;">
+      <h3 style="color:#15803D; font-size:1rem; margin-bottom:0.5rem;" id="txt-success-title">🎉 कार्ड सफलतापूर्वक एक्टिव हो गया!</h3>
+      <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.5rem;" id="txt-success-sub">नीचे दिए गए बटन पर क्लिक करके अपना डिजिटल कार्ड देखें:</p>
+      
+      <a id="payUpiBtn" href="#" class="btn-action btn-upi-pay" style="margin-bottom: 8px;">📱 ₹21 का भुगतान करें (Pay Now)</a>
+      <a id="viewCardBtn" href="#" target="_blank" class="btn-action btn-card-view">👀 डिजिटल बिजनेस कार्ड देखें</a>
     </div>
   </div>
 </div>
@@ -272,7 +314,8 @@
       adminTxt: "Admin Profit (Ramji91221m@okicici)",
       serverTxt: "Server & Automation Fee",
       totalTxt: "Total Amount Paid",
-      alertSuccess: "Registration Successful! Digital Card Generated."
+      successTitle: "🎉 Card Registered Successfully!",
+      successSub: "Click below to complete payment and view your Digital Card:"
     },
     hi: {
       regTitle: "स्मार्ट कार्ड पंजीकरण (₹21)",
@@ -290,7 +333,8 @@
       adminTxt: "एडमिन मुनाफा (Ramji91221m@okicici)",
       serverTxt: "सर्वर एवं ऑटोमेशन शुल्क",
       totalTxt: "कुल भुगतान राशि",
-      alertSuccess: "पंजीकरण सफल रहा! डिजिटल कार्ड चालू कर दिया गया है।"
+      successTitle: "🎉 कार्ड सफलतापूर्वक रजिस्टर हो गया!",
+      successSub: "भुगतान पूरा करने और डिजिटल कार्ड देखने के लिए नीचे क्लिक करें:"
     }
   };
 
@@ -313,39 +357,61 @@
     document.getElementById('txt-admin').innerText = lang.adminTxt;
     document.getElementById('txt-server').innerText = lang.serverTxt;
     document.getElementById('txt-total').innerText = lang.totalTxt;
+    document.getElementById('txt-success-title').innerText = lang.successTitle;
+    document.getElementById('txt-success-sub').innerText = lang.successSub;
   }
 
   document.getElementById('regForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    
+    // 1. सही फील्ड्स नाम के साथ पेलोड तैयार करें
     const payload = {
-      name: document.getElementById('name').value,
+      fullName: document.getElementById('name').value,
       email: document.getElementById('email').value,
       phone: document.getElementById('phone').value,
       upiId: document.getElementById('upiId').value,
       designation: document.getElementById('designation').value,
-      companyName: document.getElementById('companyName').value,
-      referredBy: document.getElementById('referredBy').value || null
+      businessName: document.getElementById('companyName').value,
+      referralCode: document.getElementById('referredBy').value || 'SDC000000'
     };
 
+    // 2. UPI पेमेंट लिंक जनरेट करें
+    const adminUpi = "Ramji91221m@okicici";
+    const upiUrl = `upi://pay?pa=${adminUpi}&pn=DigitalCard&am=21&cu=INR&tn=${encodeURIComponent('Digital Card Activation')}`;
+
+    // मोबाइल में स्वतः UPI पेमेंट ऐप खोलें
+    window.location.href = upiUrl;
+
     try {
-      const res = await fetch('https://digital-smart-card.onrender.com/api/register', {
+      // 3. अपडेटेड API Endpoint पर अनुरोध भेजें
+      const res = await fetch('https://digital-smart-card.onrender.com/api/create-card', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+
       const data = await res.json();
+      
       if (data.success) {
-        alert(translations[currentLang].alertSuccess);
-        document.getElementById('uplineLabel').innerText = `Upline Commission (${data.paymentSplit.uplineAllocation.upi})`;
+        // पेमेंट ब्रेकडाउन दिखाएं
+        const targetUplineUpi = data.paymentSplit?.uplineAllocation?.upi || adminUpi;
+        document.getElementById('uplineLabel').innerText = `Upline Commission (${targetUplineUpi})`;
         document.getElementById('paymentSplit').style.display = 'block';
+
+        // कार्ड आउटपुट लिंक और बटन सेट करें
+        const cardLink = `card.html?id=${data.cardId}`;
+        document.getElementById('viewCardBtn').href = cardLink;
+        document.getElementById('payUpiBtn').href = upiUrl;
+        document.getElementById('cardOutput').style.display = 'block';
+
       } else {
-        alert('Error: ' + data.message);
+        alert('Error: ' + (data.message || 'डेटा सेव नहीं हुआ'));
       }
     } catch (err) {
-      alert('Error connecting to backend server.');
+      console.error('Connection Error:', err);
+      alert('बैकएंड सर्वर से कनेक्ट करने में समस्या आ रही है।');
     }
   });
 </script>
 </body>
 </html>
-
