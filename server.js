@@ -6,12 +6,10 @@ const cors = require('cors');
 
 const app = express();
 
-// 1. मिडलवेयर सेटिंग्स
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 2. कॉन्फ़िगरेशन कांस्टेंट (Binance BEP-20 USDT Wallet, Onramp App ID एवं ₹21 कमीशन का गणित)
 const BINANCE_USDT_WALLET = '0x3d4a5e5009d493968b33fa289a4094f99a989f70';
 const ONRAMP_APP_ID = 2643449;
 const CARD_FEE = 21;
@@ -19,7 +17,6 @@ const ADMIN_SHARE = 5;
 const UPLINE_SHARE = 10;
 const SERVER_SHARE = 6;
 
-// 3. डेटाबेस कनेक्शन (MongoDB)
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/digital_card_mlm';
 mongoose.connect(MONGO_URI, {
   useNewUrlParser: true,
@@ -27,7 +24,7 @@ mongoose.connect(MONGO_URI, {
 }).then(() => console.log('MongoDB Connected Successfully'))
   .catch(err => console.error('MongoDB Connection Error:', err));
 
-// 4. MongoDB स्कीमा (Schemas)
+// यूजर स्कीमा (वॉलेट बैलेंस और कमाई के साथ)
 const userSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
   email: { type: String, required: true },
@@ -37,6 +34,8 @@ const userSchema = new mongoose.Schema({
   businessName: { type: String, default: 'Digital Business Card' },
   referralCode: { type: String, unique: true },
   referredBy: { type: String, default: null },
+  walletBalance: { type: Number, default: 0 }, // वर्तमान उपलब्ध बैलेंस
+  totalEarnings: { type: Number, default: 0 }, // कुल लाइफटाइम कमाई
   status: { type: String, enum: ['ACTIVE', 'EXPIRED', 'PENDING'], default: 'ACTIVE' },
   expiryDate: { type: Date },
   createdAt: { type: Date, default: Date.now }
@@ -49,26 +48,32 @@ const transactionSchema = new mongoose.Schema({
   uplineFee: { type: Number, default: UPLINE_SHARE },
   serverFee: { type: Number, default: SERVER_SHARE },
   walletAddress: { type: String, default: BINANCE_USDT_WALLET },
-  uplineUpi: { type: String },
-  status: { type: String, enum: ['SUCCESS', 'FAILED', 'PENDING'], default: 'PENDING' },
-  type: { type: String, enum: ['REGISTRATION', 'RENEWAL'] },
+  uplineId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  status: { type: String, enum: ['SUCCESS', 'PENDING'], default: 'PENDING' },
   timestamp: { type: Date, default: Date.now }
+});
+
+const withdrawalSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  amount: { type: Number, required: true },
+  upiId: { type: String, required: true },
+  status: { type: String, enum: ['PENDING', 'APPROVED', 'PAID'], default: 'PENDING' },
+  requestDate: { type: Date, default: Date.now }
 });
 
 const User = mongoose.model('User', userSchema);
 const Transaction = mongoose.model('Transaction', transactionSchema);
+const Withdrawal = mongoose.model('Withdrawal', withdrawalSchema);
 
-// 5. यूनि‍क रेफरल कोड जनरेटर
 function generateReferralCode() {
   return 'SDC' + Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
-// 6. रूट राउट
 app.get('/', (req, res) => {
-  res.send('Smart Digital Card & Dual Payment Gateway Server is Running Live!');
+  res.send('Smart Digital Card Auto-Split & Wallet Server Running Live!');
 });
 
-// 7. नया कार्ड रजिस्ट्रेशन और पेमेंट स्प्लिट API (/api/create-card)
+// कार्ड रजिस्ट्रेशन और ऑटो-कमीशन क्रेडिट API
 app.post('/api/create-card', async (req, res) => {
   try {
     const { fullName, email, phone, upiId, designation, businessName, referralCode: refCode } = req.body;
@@ -97,7 +102,12 @@ app.post('/api/create-card', async (req, res) => {
     
     const savedUser = await newUser.save();
 
-    const targetUplineUpi = uplineUser ? uplineUser.upiId : 'Admin Pool';
+    // अगर अपलाइन है, तो उसका ₹10 ऑटोमैटिक उसके वॉलेट में जोड़ें
+    if (uplineUser) {
+      uplineUser.walletBalance += UPLINE_SHARE;
+      uplineUser.totalEarnings += UPLINE_SHARE;
+      await uplineUser.save();
+    }
 
     const transaction = new Transaction({
       userId: savedUser._id, 
@@ -106,28 +116,20 @@ app.post('/api/create-card', async (req, res) => {
       uplineFee: UPLINE_SHARE,
       serverFee: SERVER_SHARE,
       walletAddress: BINANCE_USDT_WALLET,
-      uplineUpi: targetUplineUpi,
-      status: 'PENDING', 
-      type: 'REGISTRATION'
+      uplineId: uplineUser ? uplineUser._id : null,
+      status: 'PENDING'
     });
     await transaction.save();
 
     res.status(201).json({
       success: true, 
       cardId: savedUser._id,
-      message: 'User registered & payment split logged.', 
-      user: savedUser,
-      cryptoGateway: {
-        appId: ONRAMP_APP_ID,
-        walletAddress: BINANCE_USDT_WALLET,
-        network: "bsc",
-        coinCode: "USDT"
-      },
+      message: 'User registered & commission credited to upline wallet.',
       paymentSplit: {
         total: CARD_FEE,
-        adminAllocation: { amount: ADMIN_SHARE, purpose: 'Admin Profit' },
-        uplineAllocation: { amount: UPLINE_SHARE, upi: targetUplineUpi },
-        serverAllocation: { amount: SERVER_SHARE, purpose: 'Infrastructure' }
+        adminAllocation: { amount: ADMIN_SHARE },
+        uplineAllocation: { amount: UPLINE_SHARE, uplineName: uplineUser ? uplineUser.fullName : 'Admin Pool' },
+        serverAllocation: { amount: SERVER_SHARE }
       }
     });
   } catch (error) {
@@ -135,34 +137,64 @@ app.post('/api/create-card', async (req, res) => {
   }
 });
 
-// 8. कार्ड निकालने का राउट (/api/get-card/:id)
-app.get('/api/get-card/:id', async (req, res) => {
-    try {
-        const card = await User.findById(req.params.id);
-        if(!card) return res.status(404).json({ success: false, message: 'Card not found' });
-        res.json({ success: true, card });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-});
-
-// 9. ऑटो-एक्सपायरी क्रॉन जॉब (रोज रात 12 बजे)
-cron.schedule('0 0 * * *', async () => {
-  console.log('[CRON] Daily subscription check running...');
+// यूजर का डैशबोर्ड डेटा प्राप्त करने के लिए API
+app.get('/api/user-dashboard/:id', async (req, res) => {
   try {
-    const now = new Date();
-    const expiredUsers = await User.updateMany(
-      { expiryDate: { $lt: now }, status: 'ACTIVE' },
-      { $set: { status: 'EXPIRED' } }
-    );
-    console.log(`[CRON] Auto-expired ${expiredUsers.modifiedCount} users.`);
-  } catch (error) {
-    console.error('[CRON] Error:', error);
+    const user = await User.findById(req.params.id);
+    if(!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // इस यूजर के द्वारा डायरेक्ट किए गए रेफरल की लिस्ट
+    const referrals = await User.find({ referredBy: user.referralCode }).select('fullName email phone createdAt status');
+
+    res.json({
+      success: true,
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        upiId: user.upiId,
+        referralCode: user.referralCode,
+        walletBalance: user.walletBalance,
+        totalEarnings: user.totalEarnings
+      },
+      referrals
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 
-// 10. पोर्ट लिसनर
+// विड्रॉल रिक्वेस्ट API (यूजर अपने बैलेंस को निकालने के लिए अनुरोध भेजेगा)
+app.post('/api/withdraw', async (req, res) => {
+  try {
+    const { userId, amount } = req.body;
+    const user = await User.findById(userId);
+
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    if (user.walletBalance < amount || amount <= 0) {
+      return res.status(400).json({ success: false, message: 'पर्याप्त बैलेंस नहीं है (Insufficient Balance)' });
+    }
+
+    // बैलेंस काट लें और विड्रॉल रिक्वेस्ट बनाएं
+    user.walletBalance -= amount;
+    await user.save();
+
+    const withdrawal = new Withdrawal({
+      userId: user._id,
+      amount,
+      upiId: user.upiId,
+      status: 'PENDING'
+    });
+    await withdrawal.save();
+
+    res.json({ success: true, message: 'विड्रॉल रिक्वेस्ट सफलतापूर्वक दर्ज हो गई है!', newBalance: user.walletBalance });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-  console.log(`Smart Digital Card Server running on port ${PORT}`);
+  console.log(`Smart Digital Card Wallet Server running on port ${PORT}`);
 });
