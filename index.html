@@ -154,12 +154,12 @@
       font-weight: 700;
     }
 
-    /* Card Output Action Box */
-    .card-output-box {
+    /* Dual Payment Box */
+    .payment-options-box {
       margin-top: 1.25rem;
       padding: 1.25rem;
-      background: #F0FDF4;
-      border: 2px solid #22C55E;
+      background: #FFFFFF;
+      border: 2px solid #3B82F6;
       border-radius: 12px;
       text-align: center;
     }
@@ -174,9 +174,41 @@
       text-decoration: none;
       text-align: center;
       font-size: 0.9rem;
+      border: none;
+      cursor: pointer;
     }
 
-    .btn-card-view { background: #2563EB; color: white; }
+    .btn-upi-onramp { background: #16A34A; color: white; }
+    .btn-card-view { background: #2563EB; color: white; margin-top: 1rem; }
+
+    .direct-crypto-container {
+      margin-top: 1.25rem;
+      padding: 1rem;
+      background: #FFFBEB;
+      border: 1px dashed #F59E0B;
+      border-radius: 10px;
+    }
+
+    .qr-container {
+      margin: 10px auto;
+      padding: 8px;
+      background: #fff;
+      border: 1px solid #CBD5E1;
+      border-radius: 8px;
+      display: inline-block;
+    }
+
+    .address-copy-box {
+      background: #F1F5F9;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      word-break: break-all;
+      font-family: monospace;
+      margin-top: 6px;
+      border: 1px solid #CBD5E1;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -218,21 +250,21 @@
         <label id="lbl-ref">रेफरल कोड (ऐच्छिक)</label>
         <input type="text" id="referredBy" placeholder="SDCXXXXXX">
       </div>
-      <button type="submit" class="btn-submit" id="btn-pay">₹21 भुगतान करें और कार्ड सक्रिय करें (USDT)</button>
+      <button type="submit" class="btn-submit" id="btn-pay">₹21 भुगतान विकल्प चुनें</button>
     </form>
   </div>
 
-  <!-- Right Panel: Payment Split Preview & Card Link -->
+  <!-- Right Panel: Payment Split & Dual Options -->
   <div class="card-panel">
     <div class="header-box">
-      <div class="header-title" id="title-preview">क्रिप्टो भुगतान एवं कार्ड लिंक</div>
+      <div class="header-title" id="title-preview">भुगतान एवं कार्ड लिंक</div>
     </div>
 
     <p style="font-size:0.875rem; color:var(--text-muted);" id="txt-info">
-      फॉर्म भरकर Onramp.money के ज़रिए सुरक्षित UPI से भुगतान करें, जो सीधे आपके बाइनेंस USDT वॉलेट में जमा होगा।
+      फॉर्म भरकर UPI (Onramp) या डायरेक्ट Binance USDT (BEP-20) के ज़रिए सुरक्षित भुगतान करें।
     </p>
 
-    <!-- ₹21 Auto-Split Calculation Breakdown -->
+    <!-- Auto-Split Breakdown Box -->
     <div id="paymentSplit" class="split-box" style="display:none;">
       <div class="split-title" id="split-heading">⚡ ₹21 स्वचालित बंटवारा (Auto-Split)</div>
       <div class="split-row">
@@ -253,11 +285,26 @@
       </div>
     </div>
 
-    <!-- Output Card Link Box -->
-    <div id="cardOutput" class="card-output-box" style="display:none;">
-      <h3 style="color:#15803D; font-size:1rem; margin-bottom:0.5rem;" id="txt-success-title">🎉 पंजीकरण सफल रहा!</h3>
-      <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.5rem;" id="txt-success-sub">आपका डिजिटल कार्ड तैयार है:</p>
+    <!-- Dual Payment Options Box -->
+    <div id="paymentOptions" class="payment-options-box" style="display:none;">
+      <h3 style="font-size:1rem; color:#1E3A8A; margin-bottom:0.5rem;" id="txt-choose-pay">भुगतान का माध्यम चुनें:</h3>
       
+      <!-- Method 1: Onramp UPI -->
+      <button id="payOnrampBtn" type="button" class="btn-action btn-upi-onramp">📱 ऑप्शन 1: UPI / GPay / PhonePe (₹21)</button>
+
+      <!-- Method 2: Direct USDT BEP-20 -->
+      <div class="direct-crypto-container">
+        <strong style="font-size:0.85rem; color:#B45309;" id="txt-direct-crypto-title">🪙 ऑप्शन 2: डायरेक्ट USDT पे करें (BSC BEP-20)</strong>
+        <div class="qr-container">
+          <img id="usdtQr" src="" alt="Binance USDT BEP20 QR" style="width: 140px; height: 140px; display: block;">
+        </div>
+        <p style="font-size:0.75rem; color:var(--text-muted);" id="txt-network-note">नेटवर्क: <b>BNB Smart Chain (BEP20)</b></p>
+        <div class="address-copy-box" onclick="copyAddress()" id="walletAddressBox">
+          0x3d4a5e5009d493968b33fa289a4094f99a989f70
+        </div>
+        <small style="font-size:0.7rem; color:#15803D;">(टैप करके एड्रेस कॉपी करें)</small>
+      </div>
+
       <a id="viewCardBtn" href="#" target="_blank" class="btn-action btn-card-view">👀 अपना डिजिटल कार्ड देखें</a>
     </div>
   </div>
@@ -265,11 +312,12 @@
 
 <script>
   let currentLang = 'hi';
+  const BINANCE_WALLET = "0x3d4a5e5009d493968b33fa289a4094f99a989f70";
 
   const translations = {
     en: {
       regTitle: "Register Smart Card (₹21)",
-      previewTitle: "Crypto Payment & Card Link",
+      previewTitle: "Payment & Card Link",
       name: "Full Name",
       email: "Email Address",
       phone: "Phone Number",
@@ -277,19 +325,21 @@
       designation: "Designation",
       company: "Company / Business Name",
       ref: "Referral Code (Optional)",
-      payBtn: "Pay ₹21 & Activate Card (USDT)",
-      infoTxt: "Fill the form to pay securely via Onramp.money directly to your Binance USDT wallet.",
+      payBtn: "Select ₹21 Payment Options",
+      infoTxt: "Fill the form to pay securely via UPI (Onramp) or direct Binance USDT (BEP-20).",
       splitHeading: "⚡ ₹21 Auto-Split Calculation",
       adminTxt: "Admin Profit",
       serverTxt: "Server & Automation Fee",
       totalTxt: "Total Amount Paid",
-      successTitle: "🎉 Registration Successful!",
-      successSub: "Your digital card is ready:",
+      choosePay: "Choose Payment Method:",
+      payOnramp: "📱 Option 1: UPI / GPay / PhonePe (₹21)",
+      directCryptoTitle: "🪙 Option 2: Direct USDT Pay (BSC BEP-20)",
+      networkNote: "Network: BNB Smart Chain (BEP20)",
       btnViewCard: "👀 View Your Digital Card"
     },
     hi: {
       regTitle: "स्मार्ट कार्ड पंजीकरण (₹21)",
-      previewTitle: "क्रिप्टो भुगतान एवं कार्ड लिंक",
+      previewTitle: "भुगतान एवं कार्ड लिंक",
       name: "पूरा नाम",
       email: "ईमेल आईडी",
       phone: "मोबाइल नंबर",
@@ -297,19 +347,20 @@
       designation: "पद / प्रोफेशन",
       company: "दुकान / कंपनी का नाम",
       ref: "रेफरल कोड (ऐच्छिक)",
-      payBtn: "₹21 भुगतान करें और कार्ड सक्रिय करें (USDT)",
-      infoTxt: "फॉर्म भरकर Onramp के ज़रिए सुरक्षित भुगतान करें जो सीधे आपके बाइनेंस USDT वॉलेट में जाएगा।",
+      payBtn: "₹21 भुगतान विकल्प चुनें",
+      infoTxt: "फॉर्म भरकर UPI (Onramp) या डायरेक्ट Binance USDT (BEP-20) के ज़रिए सुरक्षित भुगतान करें।",
       splitHeading: "⚡ ₹21 स्वचालित बंटवारा (Auto-Split)",
       adminTxt: "एडमिन मुनाफा",
       serverTxt: "सर्वर एवं ऑटोमेशन शुल्क",
       totalTxt: "कुल भुगतान राशि",
-      successTitle: "🎉 पंजीकरण सफल रहा!",
-      successSub: "आपका डिजिटल कार्ड तैयार है:",
+      choosePay: "भुगतान का माध्यम चुनें:",
+      payOnramp: "📱 ऑप्शन 1: UPI / GPay / PhonePe (₹21)",
+      directCryptoTitle: "🪙 ऑप्शन 2: डायरेक्ट USDT पे करें (BSC BEP-20)",
+      networkNote: "नेटवर्क: BNB Smart Chain (BEP20)",
       btnViewCard: "👀 अपना डिजिटल कार्ड देखें"
     }
   };
 
-  // Language Switcher Function
   function toggleLanguage() {
     currentLang = currentLang === 'hi' ? 'en' : 'hi';
     const lang = translations[currentLang];
@@ -329,16 +380,25 @@
     document.getElementById('txt-admin').innerText = lang.adminTxt;
     document.getElementById('txt-server').innerText = lang.serverTxt;
     document.getElementById('txt-total').innerText = lang.totalTxt;
-    document.getElementById('txt-success-title').innerText = lang.successTitle;
-    document.getElementById('txt-success-sub').innerText = lang.successSub;
+    document.getElementById('txt-choose-pay').innerText = lang.choosePay;
+    document.getElementById('payOnrampBtn').innerText = lang.payOnramp;
+    document.getElementById('txt-direct-crypto-title').innerText = lang.directCryptoTitle;
+    document.getElementById('txt-network-note').innerHTML = lang.networkNote;
     document.getElementById('viewCardBtn').innerText = lang.btnViewCard;
   }
 
-  // Form Submit Handler with Onramp Web SDK Integration
+  function copyAddress() {
+    navigator.clipboard.writeText(BINANCE_WALLET);
+    alert("Binance USDT BEP20 एड्रेस कॉपी हो गया है!");
+  }
+
+  let currentPayload = {};
+
+  // Form Submit Handler
   document.getElementById('regForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const payload = {
+    currentPayload = {
       fullName: document.getElementById('name').value,
       email: document.getElementById('email').value,
       phone: document.getElementById('phone').value,
@@ -349,43 +409,28 @@
     };
 
     try {
-      // 1. बैकएंड पर यूजर और ऑटो-स्प्लिट लेजर डेटा सेव करें
+      // 1. बैकएंड पर रजिस्ट्रेशन डेटा भेजें
       const res = await fetch('https://digital-smart-card.onrender.com/api/create-card', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(currentPayload)
       });
 
       const data = await res.json();
       
       if (data.success) {
-        // अपलाइन कमीशन लेवल को डायनेमिक रूप से सेट करें
+        // अपलाइन कमीशन डायनेमिक रूप से अपडेट करें
         const targetUplineUpi = data.paymentSplit?.uplineAllocation?.upi || 'Admin Pool';
         document.getElementById('uplineLabel').innerText = `अपलाइन कमीशन (${targetUplineUpi})`;
 
-        // दोनों आउटपुट बॉक्स (कमीशन स्प्लिट और कार्ड व्यू लिंक) को स्क्रीन पर दिखाएं
+        // बाइनेंस USDT BEP20 एड्रेस का QR कोड जनरेट करें
+        const usdtQrApi = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(BINANCE_WALLET)}`;
+        document.getElementById('usdtQr').src = usdtQrApi;
+
+        // दोनों बॉक्स दिखाएं
         document.getElementById('paymentSplit').style.display = 'block';
         document.getElementById('viewCardBtn').href = `card.html?id=${data.cardId}`;
-        document.getElementById('cardOutput').style.display = 'block';
-
-        // 2. Onramp.money Web SDK को इनिशियलाइज करें और ऑटोमैटिक विजेट खोलें
-        const onrampsDK = new OnrampWebSDK({
-          appId: 2643449,
-          walletAddress: "0x3d4a5e5009d493968b33fa289a4094f99a989f70",[span_0](start_span)[span_0](end_span)
-          coinCode: "USDT",
-          network: "bsc",
-          fiatAmount: 21,
-          email: payload.email,
-          phoneNumber: payload.phone
-        });
-
-        // ऑनरैंप विजेट पॉप-अप खोलें
-        onrampsDK.show();
-
-        // ट्रांजैक्शन इवेंट्स लॉग करना
-        onrampsDK.on('TX_EVENTS', (event) => {
-          console.log('Transaction event:', event);
-        });
+        document.getElementById('paymentOptions').style.display = 'block';
 
       } else {
         alert('त्रुटि (Error): ' + (data.message || 'डेटा सेव नहीं हुआ'));
@@ -394,6 +439,30 @@
       console.error('Connection Error:', err);
       alert('सर्वर से कनेक्ट करने में समस्या आ रही है।');
     }
+  });
+
+  // Onramp UPI Payment Trigger
+  document.getElementById('payOnrampBtn').addEventListener('click', () => {
+    if(!currentPayload.email) {
+      alert("कृपया पहले फॉर्म भरें।");
+      return;
+    }
+
+    const onrampsDK = new OnrampWebSDK({
+      appId: 2643449,
+      walletAddress: BINANCE_WALLET,
+      coinCode: "USDT",
+      network: "bsc",
+      fiatAmount: 21,
+      email: currentPayload.email,
+      phoneNumber: currentPayload.phone
+    });
+
+    onrampsDK.show();
+
+    onrampsDK.on('TX_EVENTS', (event) => {
+      console.log('Transaction event:', event);
+    });
   });
 </script>
 </body>
