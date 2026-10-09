@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Smart Digital Card Portal</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Onramp.money Web SDK UMD Script -->
+  <script src="https://cdn.jsdelivr.net/npm/@onramp.money/onramp-web-sdk@latest/lib/index.min.js"></script>
   <style>
     :root {
       --bg: #F1F5F9;
@@ -152,7 +154,7 @@
       font-weight: 700;
     }
 
-    /* Card & QR Output Action Box */
+    /* Card Output Action Box */
     .card-output-box {
       margin-top: 1.25rem;
       padding: 1.25rem;
@@ -162,20 +164,11 @@
       text-align: center;
     }
 
-    .qr-container {
-      margin: 10px auto;
-      padding: 10px;
-      background: #fff;
-      border: 1px solid #CBD5E1;
-      border-radius: 12px;
-      display: inline-block;
-    }
-
     .btn-action {
       display: block;
       width: 100%;
       padding: 0.75rem;
-      margin-top: 0.5rem;
+      margin-top: 0.75rem;
       border-radius: 8px;
       font-weight: 700;
       text-decoration: none;
@@ -184,12 +177,12 @@
     }
 
     .btn-card-view { background: #2563EB; color: white; }
-    .btn-upi-pay { background: #16A34A; color: white; }
   </style>
 </head>
 <body>
 
 <div class="container">
+  <!-- Left Panel: Registration Form -->
   <div class="card-panel">
     <div class="header-box">
       <div class="header-title" id="title-reg">स्मार्ट कार्ड पंजीकरण (₹21)</div>
@@ -210,7 +203,7 @@
         <input type="tel" id="phone" required placeholder="9876543210">
       </div>
       <div class="form-group">
-        <label id="lbl-upi">आपकी UPI ID (कमीशन प्राप्त करने के लिए)</label>
+        <label id="lbl-upi">आपकी UPI ID / वॉलेट विवरण</label>
         <input type="text" id="upiId" required placeholder="username@upi">
       </div>
       <div class="form-group">
@@ -225,23 +218,25 @@
         <label id="lbl-ref">रेफरल कोड (ऐच्छिक)</label>
         <input type="text" id="referredBy" placeholder="SDCXXXXXX">
       </div>
-      <button type="submit" class="btn-submit" id="btn-pay">₹21 भुगतान करें और कार्ड सक्रिय करें</button>
+      <button type="submit" class="btn-submit" id="btn-pay">₹21 भुगतान करें और कार्ड सक्रिय करें (USDT)</button>
     </form>
   </div>
 
+  <!-- Right Panel: Payment Split Preview & Card Link -->
   <div class="card-panel">
     <div class="header-box">
-      <div class="header-title" id="title-preview">भुगतान एवं कार्ड लिंक</div>
+      <div class="header-title" id="title-preview">क्रिप्टो भुगतान एवं कार्ड लिंक</div>
     </div>
 
     <p style="font-size:0.875rem; color:var(--text-muted);" id="txt-info">
-      कार्ड चालू करने और कमीशन सिस्टम देखने के लिए फॉर्म भरें।
+      फॉर्म भरकर Onramp.money के ज़रिए सुरक्षित UPI से भुगतान करें, जो सीधे आपके बाइनेंस USDT वॉलेट में जमा होगा।
     </p>
 
+    <!-- ₹21 Auto-Split Calculation Breakdown -->
     <div id="paymentSplit" class="split-box" style="display:none;">
       <div class="split-title" id="split-heading">⚡ ₹21 स्वचालित बंटवारा (Auto-Split)</div>
       <div class="split-row">
-        <span id="txt-admin">एडमिन मुनाफा (ramji91221m@okicici)</span>
+        <span id="txt-admin">एडमिन मुनाफा</span>
         <span class="price-tag">₹5.00</span>
       </div>
       <div class="split-row">
@@ -258,16 +253,11 @@
       </div>
     </div>
 
+    <!-- Output Card Link Box -->
     <div id="cardOutput" class="card-output-box" style="display:none;">
-      <h3 style="color:#15803D; font-size:1rem; margin-bottom:0.5rem;" id="txt-success-title">🎉 पंजीकरण पूरा हुआ!</h3>
-      <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.5rem;" id="txt-success-sub">नीचे दिए गए QR कोड को स्कैन करें या डायरेक्ट ऐप से पे करें:</p>
+      <h3 style="color:#15803D; font-size:1rem; margin-bottom:0.5rem;" id="txt-success-title">🎉 पंजीकरण सफल रहा!</h3>
+      <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.5rem;" id="txt-success-sub">आपका डिजिटल कार्ड तैयार है:</p>
       
-      <div class="qr-container">
-        <img id="qrImage" src="" alt="Payment QR Code" style="width: 160px; height: 160px; display: block;">
-        <p style="font-size: 0.75rem; font-weight: bold; margin-top: 5px; color: #334155;" id="txt-qr-inst">QR स्कैन करके ₹21 पे करें</p>
-      </div>
-
-      <a id="payUpiBtn" href="#" class="btn-action btn-upi-pay">📱 UPI ऐप से ₹21 पे करें</a>
       <a id="viewCardBtn" href="#" target="_blank" class="btn-action btn-card-view">👀 अपना डिजिटल कार्ड देखें</a>
     </div>
   </div>
@@ -279,51 +269,47 @@
   const translations = {
     en: {
       regTitle: "Register Smart Card (₹21)",
-      previewTitle: "Payment & Card Link",
+      previewTitle: "Crypto Payment & Card Link",
       name: "Full Name",
       email: "Email Address",
       phone: "Phone Number",
-      upi: "Your UPI ID (For Receiving Commission)",
+      upi: "Your UPI ID / Wallet Details",
       designation: "Designation",
       company: "Company / Business Name",
       ref: "Referral Code (Optional)",
-      payBtn: "Pay ₹21 & Activate Card",
-      infoTxt: "Fill the form to activate your card and view system distribution.",
+      payBtn: "Pay ₹21 & Activate Card (USDT)",
+      infoTxt: "Fill the form to pay securely via Onramp.money directly to your Binance USDT wallet.",
       splitHeading: "⚡ ₹21 Auto-Split Calculation",
-      adminTxt: "Admin Profit (ramji91221m@okicici)",
+      adminTxt: "Admin Profit",
       serverTxt: "Server & Automation Fee",
       totalTxt: "Total Amount Paid",
       successTitle: "🎉 Registration Successful!",
-      successSub: "Scan the QR below or pay directly via app:",
-      qrInst: "Scan QR to Pay ₹21",
-      btnUpiPay: "📱 Pay ₹21 via UPI App",
+      successSub: "Your digital card is ready:",
       btnViewCard: "👀 View Your Digital Card"
     },
     hi: {
       regTitle: "स्मार्ट कार्ड पंजीकरण (₹21)",
-      previewTitle: "भुगतान एवं कार्ड लिंक",
+      previewTitle: "क्रिप्टो भुगतान एवं कार्ड लिंक",
       name: "पूरा नाम",
       email: "ईमेल आईडी",
       phone: "मोबाइल नंबर",
-      upi: "आपकी UPI ID (कमीशन प्राप्त करने के लिए)",
+      upi: "आपकी UPI ID / वॉलेट विवरण",
       designation: "पद / प्रोफेशन",
       company: "दुकान / कंपनी का नाम",
       ref: "रेफरल कोड (ऐच्छिक)",
-      payBtn: "₹21 भुगतान करें और कार्ड सक्रिय करें",
-      infoTxt: "कार्ड चालू करने और कमीशन सिस्टम देखने के लिए फॉर्म भरें।",
+      payBtn: "₹21 भुगतान करें और कार्ड सक्रिय करें (USDT)",
+      infoTxt: "फॉर्म भरकर Onramp के ज़रिए सुरक्षित भुगतान करें जो सीधे आपके बाइनेंस USDT वॉलेट में जाएगा।",
       splitHeading: "⚡ ₹21 स्वचालित बंटवारा (Auto-Split)",
-      adminTxt: "एडमिन मुनाफा (ramji91221m@okicici)",
+      adminTxt: "एडमिन मुनाफा",
       serverTxt: "सर्वर एवं ऑटोमेशन शुल्क",
       totalTxt: "कुल भुगतान राशि",
-      successTitle: "🎉 पंजीकरण पूरा हुआ!",
-      successSub: "नीचे दिए गए QR कोड को स्कैन करें या डायरेक्ट ऐप से पे करें:",
-      qrInst: "QR स्कैन करके ₹21 पे करें",
-      btnUpiPay: "📱 UPI ऐप से ₹21 पे करें",
+      successTitle: "🎉 पंजीकरण सफल रहा!",
+      successSub: "आपका डिजिटल कार्ड तैयार है:",
       btnViewCard: "👀 अपना डिजिटल कार्ड देखें"
     }
   };
 
-  // Language Toggle Function 
+  // Language Switcher Function
   function toggleLanguage() {
     currentLang = currentLang === 'hi' ? 'en' : 'hi';
     const lang = translations[currentLang];
@@ -343,15 +329,12 @@
     document.getElementById('txt-admin').innerText = lang.adminTxt;
     document.getElementById('txt-server').innerText = lang.serverTxt;
     document.getElementById('txt-total').innerText = lang.totalTxt;
-    
     document.getElementById('txt-success-title').innerText = lang.successTitle;
     document.getElementById('txt-success-sub').innerText = lang.successSub;
-    document.getElementById('txt-qr-inst').innerText = lang.qrInst;
-    document.getElementById('payUpiBtn').innerText = lang.btnUpiPay;
     document.getElementById('viewCardBtn').innerText = lang.btnViewCard;
   }
 
-  // Form Submit Handler
+  // Form Submit Handler with Onramp Web SDK Integration
   document.getElementById('regForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -365,18 +348,8 @@
       referralCode: document.getElementById('referredBy').value || 'SDC000000'
     };
 
-    // आपके स्क्रीनशॉट के अनुसार एकदम सही UPI ID और नाम 
-    const adminUpi = "ramji91221m@okicici";
-    const payeeName = encodeURIComponent("Ramji Kung Fu Master");
-    const note = encodeURIComponent("Digital Card Activation");
-    
-    // UPI Intent String (For Mobile App & QR)
-    const upiUrl = `upi://pay?pa=${adminUpi}&pn=${payeeName}&am=21&cu=INR&tn=${note}`;
-
-    // ₹21 का डायनेमिक QR कोड जनरेट करना
-    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiUrl)}`;
-
     try {
+      // 1. बैकएंड पर यूजर और ऑटो-स्प्लिट लेजर डेटा सेव करें
       const res = await fetch('https://digital-smart-card.onrender.com/api/create-card', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -386,23 +359,33 @@
       const data = await res.json();
       
       if (data.success) {
-        // QR कोड इमेज सेट करें
-        document.getElementById('qrImage').src = qrApiUrl;
-        
-        // बटन के लिंक सेट करें
-        document.getElementById('payUpiBtn').href = upiUrl;
-        document.getElementById('viewCardBtn').href = `card.html?id=${data.cardId}`;
+        // अपलाइन कमीशन लेवल को डायनेमिक रूप से सेट करें
+        const targetUplineUpi = data.paymentSplit?.uplineAllocation?.upi || 'Admin Pool';
+        document.getElementById('uplineLabel').innerText = `अपलाइन कमीशन (${targetUplineUpi})`;
 
-        // अपलाइन कमीशन डायनेमिक रूप से सेट करें
-        const targetUplineUpi = data.paymentSplit?.uplineAllocation?.upi || adminUpi;
-        document.getElementById('uplineLabel').innerText = `Upline Commission (${targetUplineUpi})`;
-
-        // दोनों बॉक्स (पेमेंट ब्रेकडाउन और कार्ड आउटपुट) दिखाएं
+        // दोनों आउटपुट बॉक्स (कमीशन स्प्लिट और कार्ड व्यू लिंक) को स्क्रीन पर दिखाएं
         document.getElementById('paymentSplit').style.display = 'block';
+        document.getElementById('viewCardBtn').href = `card.html?id=${data.cardId}`;
         document.getElementById('cardOutput').style.display = 'block';
 
-        // अगर यूजर मोबाइल पर है, तो अपने आप UPI ऐप (GPay/PhonePe) खोलने की कोशिश करें
-        window.location.href = upiUrl;
+        // 2. Onramp.money Web SDK को इनिशियलाइज करें और ऑटोमैटिक विजेट खोलें
+        const onrampsDK = new OnrampWebSDK({
+          appId: 2643449,
+          walletAddress: "0x3d4a5e5009d493968b33fa289a4094f99a989f70",[span_0](start_span)[span_0](end_span)
+          coinCode: "USDT",
+          network: "bsc",
+          fiatAmount: 21,
+          email: payload.email,
+          phoneNumber: payload.phone
+        });
+
+        // ऑनरैंप विजेट पॉप-अप खोलें
+        onrampsDK.show();
+
+        // ट्रांजैक्शन इवेंट्स लॉग करना
+        onrampsDK.on('TX_EVENTS', (event) => {
+          console.log('Transaction event:', event);
+        });
 
       } else {
         alert('त्रुटि (Error): ' + (data.message || 'डेटा सेव नहीं हुआ'));
