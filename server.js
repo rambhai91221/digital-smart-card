@@ -11,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 2. कॉन्फ़िगरेशन कांस्टेंट (Binance USDT, Onramp App ID एवं ₹21 कमीशन का पूरा गणित)
+// 2. कॉन्फ़िगरेशन कांस्टेंट (Binance BEP-20 USDT Wallet, Onramp App ID एवं ₹21 कमीशन का गणित)
 const BINANCE_USDT_WALLET = '0x3d4a5e5009d493968b33fa289a4094f99a989f70';
 const ONRAMP_APP_ID = 2643449;
 const CARD_FEE = 21;
@@ -32,7 +32,7 @@ const userSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
   email: { type: String, required: true },
   phone: { type: String, required: true },
-  upiId: { type: String, default: 'none' }, // कमीशन पेआउट के लिए यूजर की UPI ID
+  upiId: { type: String, default: 'none' },
   designation: { type: String, default: 'Self' },
   businessName: { type: String, default: 'Digital Business Card' },
   referralCode: { type: String, unique: true },
@@ -58,22 +58,21 @@ const transactionSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 const Transaction = mongoose.model('Transaction', transactionSchema);
 
-// 5. हेल्पर फंक्शन (यूनिक रेफरल कोड बनाने के लिए)
+// 5. यूनि‍क रेफरल कोड जनरेटर
 function generateReferralCode() {
   return 'SDC' + Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
-// 6. रूट राउट (Root Check)
+// 6. रूट राउट
 app.get('/', (req, res) => {
-  res.send('Smart Digital Card & Crypto Gateway Server is Running Live!');
+  res.send('Smart Digital Card & Dual Payment Gateway Server is Running Live!');
 });
 
-// 7. नया कार्ड रजिस्ट्रेशन, क्रिप्टो गेटवे और ऑटो-स्प्लिट लेजर (/api/create-card)
+// 7. नया कार्ड रजिस्ट्रेशन और पेमेंट स्प्लिट API (/api/create-card)
 app.post('/api/create-card', async (req, res) => {
   try {
     const { fullName, email, phone, upiId, designation, businessName, referralCode: refCode } = req.body;
     
-    // अपलाइन यूजर की जाँच करें
     let uplineUser = null;
     if (refCode && refCode !== 'SDC000000') {
       uplineUser = await User.findOne({ referralCode: refCode, status: 'ACTIVE' });
@@ -81,7 +80,7 @@ app.post('/api/create-card', async (req, res) => {
     
     const referralCode = generateReferralCode();
     const expiryDate = new Date();
-    expiryDate.setFullYear(expiryDate.getFullYear() + 1); // 1 साल की वैलिडिटी
+    expiryDate.setFullYear(expiryDate.getFullYear() + 1);
 
     const newUser = new User({
       fullName: fullName || 'User',
@@ -98,10 +97,8 @@ app.post('/api/create-card', async (req, res) => {
     
     const savedUser = await newUser.save();
 
-    // अपलाइन कमीशन पाने वाले का UPI/पहचान (यदि अपलाइन नहीं है तो 'Admin Pool')
     const targetUplineUpi = uplineUser ? uplineUser.upiId : 'Admin Pool';
 
-    // डेटाबेस में ट्रांजैक्शन रिकॉर्ड का हिसाब रखें (Binance USDT + Commission Breakdown)
     const transaction = new Transaction({
       userId: savedUser._id, 
       totalAmount: CARD_FEE,
@@ -115,11 +112,10 @@ app.post('/api/create-card', async (req, res) => {
     });
     await transaction.save();
 
-    // फ्रंटएंड के लिए सम्पूर्ण रेस्पॉन्स (Crypto Checkout Config + Split Accounting)
     res.status(201).json({
       success: true, 
       cardId: savedUser._id,
-      message: 'User registered & payment breakdown logged successfully.', 
+      message: 'User registered & payment split logged.', 
       user: savedUser,
       cryptoGateway: {
         appId: ONRAMP_APP_ID,
@@ -139,7 +135,7 @@ app.post('/api/create-card', async (req, res) => {
   }
 });
 
-// 8. कार्ड डेटा निकालने का राउट (/api/get-card/:id)
+// 8. कार्ड निकालने का राउट (/api/get-card/:id)
 app.get('/api/get-card/:id', async (req, res) => {
     try {
         const card = await User.findById(req.params.id);
@@ -150,7 +146,7 @@ app.get('/api/get-card/:id', async (req, res) => {
     }
 });
 
-// 9. ऑटोमैटिक एक्सपायरी चेक (रोज रात 12 बजे चलेगा)
+// 9. ऑटो-एक्सपायरी क्रॉन जॉब (रोज रात 12 बजे)
 cron.schedule('0 0 * * *', async () => {
   console.log('[CRON] Daily subscription check running...');
   try {
@@ -165,7 +161,7 @@ cron.schedule('0 0 * * *', async () => {
   }
 });
 
-// 10. सर्वर पोर्ट लिसनर
+// 10. पोर्ट लिसनर
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`Smart Digital Card Server running on port ${PORT}`);
