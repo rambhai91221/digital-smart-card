@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Smart Digital Card Portal</title>
-  <!-- Google Fonts for Modern Typography -->
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -13,8 +12,6 @@
       --text-main: #0F172A;
       --text-muted: #64748B;
       --primary: #2563EB;
-      --primary-hover: #1D4ED8;
-      --accent: #10B981;
       --border: #E2E8F0;
       --shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
     }
@@ -80,11 +77,6 @@
       transition: all 0.2s ease;
     }
 
-    .lang-btn:hover {
-      background: var(--primary);
-      color: white;
-    }
-
     /* Form Design */
     .form-group { margin-bottom: 1.1rem; }
 
@@ -102,15 +94,7 @@
       border: 1.5px solid var(--border);
       border-radius: 10px;
       font-size: 0.9rem;
-      transition: all 0.2s ease;
       background: #FAFAFA;
-    }
-
-    input:focus {
-      outline: none;
-      border-color: var(--primary);
-      background: #FFF;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
     }
 
     button.btn-submit {
@@ -123,14 +107,7 @@
       font-size: 0.95rem;
       font-weight: 700;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-      transition: transform 0.1s ease, box-shadow 0.2s ease;
       margin-top: 0.5rem;
-    }
-
-    button.btn-submit:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
     }
 
     /* Payment Split Preview Box */
@@ -146,7 +123,6 @@
       font-weight: 700;
       font-size: 0.95rem;
       margin-bottom: 1rem;
-      color: var(--text-main);
       display: flex;
       align-items: center;
       gap: 0.5rem;
@@ -176,7 +152,7 @@
       font-weight: 700;
     }
 
-    /* Card Output Action Box */
+    /* Card & QR Output Action Box */
     .card-output-box {
       margin-top: 1.25rem;
       padding: 1.25rem;
@@ -186,8 +162,17 @@
       text-align: center;
     }
 
-    .btn-action {
+    .qr-container {
+      margin: 10px auto;
+      padding: 10px;
+      background: #fff;
+      border: 1px solid #CBD5E1;
+      border-radius: 12px;
       display: inline-block;
+    }
+
+    .btn-action {
+      display: block;
       width: 100%;
       padding: 0.75rem;
       margin-top: 0.5rem;
@@ -198,21 +183,13 @@
       font-size: 0.9rem;
     }
 
-    .btn-card-view {
-      background: #2563EB;
-      color: white;
-    }
-
-    .btn-upi-pay {
-      background: #16A34A;
-      color: white;
-    }
+    .btn-card-view { background: #2563EB; color: white; }
+    .btn-upi-pay { background: #16A34A; color: white; }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <!-- Registration Panel -->
   <div class="card-panel">
     <div class="header-box">
       <div class="header-title" id="title-reg">स्मार्ट कार्ड पंजीकरण (₹21)</div>
@@ -252,21 +229,19 @@
     </form>
   </div>
 
-  <!-- Result Panel -->
   <div class="card-panel">
     <div class="header-box">
-      <div class="header-title" id="title-preview">भुगतान का विवरण</div>
+      <div class="header-title" id="title-preview">भुगतान एवं कार्ड लिंक</div>
     </div>
 
     <p style="font-size:0.875rem; color:var(--text-muted);" id="txt-info">
       कार्ड चालू करने और कमीशन सिस्टम देखने के लिए फॉर्म भरें।
     </p>
 
-    <!-- BreakDown Box -->
     <div id="paymentSplit" class="split-box" style="display:none;">
       <div class="split-title" id="split-heading">⚡ ₹21 स्वचालित बंटवारा (Auto-Split)</div>
       <div class="split-row">
-        <span id="txt-admin">एडमिन मुनाफा (Ramji91221m@okicici)</span>
+        <span id="txt-admin">एडमिन मुनाफा (ramji91221m@okicici)</span>
         <span class="price-tag">₹5.00</span>
       </div>
       <div class="split-row">
@@ -283,13 +258,17 @@
       </div>
     </div>
 
-    <!-- Output Box for Card Link -->
     <div id="cardOutput" class="card-output-box" style="display:none;">
-      <h3 style="color:#15803D; font-size:1rem; margin-bottom:0.5rem;" id="txt-success-title">🎉 कार्ड सफलतापूर्वक एक्टिव हो गया!</h3>
-      <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.5rem;" id="txt-success-sub">नीचे दिए गए बटन पर क्लिक करके अपना डिजिटल कार्ड देखें:</p>
+      <h3 style="color:#15803D; font-size:1rem; margin-bottom:0.5rem;" id="txt-success-title">🎉 पंजीकरण पूरा हुआ!</h3>
+      <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.5rem;" id="txt-success-sub">नीचे दिए गए QR कोड को स्कैन करें या डायरेक्ट ऐप से पे करें:</p>
       
-      <a id="payUpiBtn" href="#" class="btn-action btn-upi-pay" style="margin-bottom: 8px;">📱 ₹21 का भुगतान करें (Pay Now)</a>
-      <a id="viewCardBtn" href="#" target="_blank" class="btn-action btn-card-view">👀 डिजिटल बिजनेस कार्ड देखें</a>
+      <div class="qr-container">
+        <img id="qrImage" src="" alt="Payment QR Code" style="width: 160px; height: 160px; display: block;">
+        <p style="font-size: 0.75rem; font-weight: bold; margin-top: 5px; color: #334155;" id="txt-qr-inst">QR स्कैन करके ₹21 पे करें</p>
+      </div>
+
+      <a id="payUpiBtn" href="#" class="btn-action btn-upi-pay">📱 UPI ऐप से ₹21 पे करें</a>
+      <a id="viewCardBtn" href="#" target="_blank" class="btn-action btn-card-view">👀 अपना डिजिटल कार्ड देखें</a>
     </div>
   </div>
 </div>
@@ -300,7 +279,7 @@
   const translations = {
     en: {
       regTitle: "Register Smart Card (₹21)",
-      previewTitle: "Payment Breakdown",
+      previewTitle: "Payment & Card Link",
       name: "Full Name",
       email: "Email Address",
       phone: "Phone Number",
@@ -311,15 +290,18 @@
       payBtn: "Pay ₹21 & Activate Card",
       infoTxt: "Fill the form to activate your card and view system distribution.",
       splitHeading: "⚡ ₹21 Auto-Split Calculation",
-      adminTxt: "Admin Profit (Ramji91221m@okicici)",
+      adminTxt: "Admin Profit (ramji91221m@okicici)",
       serverTxt: "Server & Automation Fee",
       totalTxt: "Total Amount Paid",
-      successTitle: "🎉 Card Registered Successfully!",
-      successSub: "Click below to complete payment and view your Digital Card:"
+      successTitle: "🎉 Registration Successful!",
+      successSub: "Scan the QR below or pay directly via app:",
+      qrInst: "Scan QR to Pay ₹21",
+      btnUpiPay: "📱 Pay ₹21 via UPI App",
+      btnViewCard: "👀 View Your Digital Card"
     },
     hi: {
       regTitle: "स्मार्ट कार्ड पंजीकरण (₹21)",
-      previewTitle: "भुगतान का विवरण",
+      previewTitle: "भुगतान एवं कार्ड लिंक",
       name: "पूरा नाम",
       email: "ईमेल आईडी",
       phone: "मोबाइल नंबर",
@@ -330,14 +312,18 @@
       payBtn: "₹21 भुगतान करें और कार्ड सक्रिय करें",
       infoTxt: "कार्ड चालू करने और कमीशन सिस्टम देखने के लिए फॉर्म भरें।",
       splitHeading: "⚡ ₹21 स्वचालित बंटवारा (Auto-Split)",
-      adminTxt: "एडमिन मुनाफा (Ramji91221m@okicici)",
+      adminTxt: "एडमिन मुनाफा (ramji91221m@okicici)",
       serverTxt: "सर्वर एवं ऑटोमेशन शुल्क",
       totalTxt: "कुल भुगतान राशि",
-      successTitle: "🎉 कार्ड सफलतापूर्वक रजिस्टर हो गया!",
-      successSub: "भुगतान पूरा करने और डिजिटल कार्ड देखने के लिए नीचे क्लिक करें:"
+      successTitle: "🎉 पंजीकरण पूरा हुआ!",
+      successSub: "नीचे दिए गए QR कोड को स्कैन करें या डायरेक्ट ऐप से पे करें:",
+      qrInst: "QR स्कैन करके ₹21 पे करें",
+      btnUpiPay: "📱 UPI ऐप से ₹21 पे करें",
+      btnViewCard: "👀 अपना डिजिटल कार्ड देखें"
     }
   };
 
+  // Language Toggle Function 
   function toggleLanguage() {
     currentLang = currentLang === 'hi' ? 'en' : 'hi';
     const lang = translations[currentLang];
@@ -357,14 +343,18 @@
     document.getElementById('txt-admin').innerText = lang.adminTxt;
     document.getElementById('txt-server').innerText = lang.serverTxt;
     document.getElementById('txt-total').innerText = lang.totalTxt;
+    
     document.getElementById('txt-success-title').innerText = lang.successTitle;
     document.getElementById('txt-success-sub').innerText = lang.successSub;
+    document.getElementById('txt-qr-inst').innerText = lang.qrInst;
+    document.getElementById('payUpiBtn').innerText = lang.btnUpiPay;
+    document.getElementById('viewCardBtn').innerText = lang.btnViewCard;
   }
 
+  // Form Submit Handler
   document.getElementById('regForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    // 1. सही फील्ड्स नाम के साथ पेलोड तैयार करें
     const payload = {
       fullName: document.getElementById('name').value,
       email: document.getElementById('email').value,
@@ -375,15 +365,18 @@
       referralCode: document.getElementById('referredBy').value || 'SDC000000'
     };
 
-    // 2. UPI पेमेंट लिंक जनरेट करें
-    const adminUpi = "Ramji91221m@okicici";
-    const upiUrl = `upi://pay?pa=${adminUpi}&pn=DigitalCard&am=21&cu=INR&tn=${encodeURIComponent('Digital Card Activation')}`;
+    // आपके स्क्रीनशॉट के अनुसार एकदम सही UPI ID और नाम 
+    const adminUpi = "ramji91221m@okicici";
+    const payeeName = encodeURIComponent("Ramji Kung Fu Master");
+    const note = encodeURIComponent("Digital Card Activation");
+    
+    // UPI Intent String (For Mobile App & QR)
+    const upiUrl = `upi://pay?pa=${adminUpi}&pn=${payeeName}&am=21&cu=INR&tn=${note}`;
 
-    // मोबाइल में स्वतः UPI पेमेंट ऐप खोलें
-    window.location.href = upiUrl;
+    // ₹21 का डायनेमिक QR कोड जनरेट करना
+    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiUrl)}`;
 
     try {
-      // 3. अपडेटेड API Endpoint पर अनुरोध भेजें
       const res = await fetch('https://digital-smart-card.onrender.com/api/create-card', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -393,23 +386,30 @@
       const data = await res.json();
       
       if (data.success) {
-        // पेमेंट ब्रेकडाउन दिखाएं
+        // QR कोड इमेज सेट करें
+        document.getElementById('qrImage').src = qrApiUrl;
+        
+        // बटन के लिंक सेट करें
+        document.getElementById('payUpiBtn').href = upiUrl;
+        document.getElementById('viewCardBtn').href = `card.html?id=${data.cardId}`;
+
+        // अपलाइन कमीशन डायनेमिक रूप से सेट करें
         const targetUplineUpi = data.paymentSplit?.uplineAllocation?.upi || adminUpi;
         document.getElementById('uplineLabel').innerText = `Upline Commission (${targetUplineUpi})`;
-        document.getElementById('paymentSplit').style.display = 'block';
 
-        // कार्ड आउटपुट लिंक और बटन सेट करें
-        const cardLink = `card.html?id=${data.cardId}`;
-        document.getElementById('viewCardBtn').href = cardLink;
-        document.getElementById('payUpiBtn').href = upiUrl;
+        // दोनों बॉक्स (पेमेंट ब्रेकडाउन और कार्ड आउटपुट) दिखाएं
+        document.getElementById('paymentSplit').style.display = 'block';
         document.getElementById('cardOutput').style.display = 'block';
 
+        // अगर यूजर मोबाइल पर है, तो अपने आप UPI ऐप (GPay/PhonePe) खोलने की कोशिश करें
+        window.location.href = upiUrl;
+
       } else {
-        alert('Error: ' + (data.message || 'डेटा सेव नहीं हुआ'));
+        alert('त्रुटि (Error): ' + (data.message || 'डेटा सेव नहीं हुआ'));
       }
     } catch (err) {
       console.error('Connection Error:', err);
-      alert('बैकएंड सर्वर से कनेक्ट करने में समस्या आ रही है।');
+      alert('सर्वर से कनेक्ट करने में समस्या आ रही है।');
     }
   });
 </script>
