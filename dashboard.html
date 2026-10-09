@@ -1,1 +1,112 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Earnings Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { background: #F1F5F9; color: #0F172A; padding: 2rem 1rem; display: flex; justify-content: center; }
+    .container { width: 100%; max-width: 800px; background: #FFFFFF; padding: 2rem; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+    h2 { margin-bottom: 1rem; color: #1E3A8A; }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-card { background: #F8FAFC; border: 1px solid #E2E8F0; padding: 1.25rem; border-radius: 12px; text-align: center; }
+    .stat-card h3 { font-size: 0.85rem; color: #64748B; margin-bottom: 0.5rem; }
+    .stat-card p { font-size: 1.5rem; font-weight: 700; color: #16A34A; }
+    .btn-withdraw { width: 100%; padding: 0.85rem; background: #2563EB; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 1rem; }
+    .ref-box { margin-top: 1.5rem; background: #FFFBEB; border: 1px dashed #F59E0B; padding: 1rem; border-radius: 8px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2 id="userName">स्वागत है, यूजर!</h2>
+  <p style="color: #64748B; margin-bottom: 1.5rem;" id="userEmail">लोड हो रहा है...</p>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <h3>उपलब्ध वॉलेट बैलेंस (Available Balance)</h3>
+      <p id="walletBalance">₹0.00</p>
+    </div>
+    <div class="stat-card">
+      <h3>कुल लाइफटाइम कमाई (Total Earnings)</h3>
+      <p id="totalEarnings">₹0.00</p>
+    </div>
+  </div>
+
+  <div class="ref-box">
+    <strong>आपका रेफरल लिंक:</strong>
+    <p id="refLink" style="font-family: monospace; word-break: break-all; margin-top: 5px; color: #D97706;"></p>
+  </div>
+
+  <button onclick="requestWithdrawal()" class="btn-withdraw">💳 अपनी UPI पर राशि विड्रॉल (Withdraw) करें</button>
+</div>
+
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const userId = urlParams.get('id');
+
+  let currentBalance = 0;
+
+  async function loadDashboard() {
+    if (!userId) {
+      alert("यूजर आईडी नहीं मिली! कृपया अपने डिजिटल कार्ड लिंक से आएं।");
+      return;
+    }
+
+    try {
+      const res = await fetch(`https://digital-smart-card.onrender.com/api/user-dashboard/${userId}`);
+      const data = await res.json();
+
+      if (data.success) {
+        document.getElementById('userName').innerText = `स्वागत है, ${data.user.fullName}`;
+        document.getElementById('userEmail').innerText = `ईमेल: ${data.user.email} | UPI: ${data.user.upiId}`;
+        document.getElementById('walletBalance').innerText = `₹${data.user.walletBalance}.00`;
+        document.getElementById('totalEarnings').innerText = `₹${data.user.totalEarnings}.00`;
+        
+        currentBalance = data.user.walletBalance;
+        document.getElementById('refLink').innerText = `https://rmbusiness.online/index.html?ref=${data.user.referralCode}`;
+      } else {
+        alert("डेटा लोड करने में त्रुटि!");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("सर्वर से कनेक्ट करने में समस्या आ रही है।");
+    }
+  }
+
+  async function requestWithdrawal() {
+    if (currentBalance <= 0) {
+      alert("विड्रॉल करने के लिए पर्याप्त बैलेंस नहीं है!");
+      return;
+    }
+
+    const amount = prompt(`आप कितना अमाउंट विड्रॉल करना चाहते हैं? (उपलब्ध बैलेंस: ₹${currentBalance})`, currentBalance);
+    if (!amount) return;
+
+    try {
+      const res = await fetch('https://digital-smart-card.onrender.com/api/withdraw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, amount: Number(amount) })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert("विड्रॉल रिक्वेस्ट सफल रही! एडमिन द्वारा जल्द ही आपके UPI पर पैसे भेज दिए जाएंगे।");
+        loadDashboard();
+      } else {
+        alert(data.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("विड्रॉल अनुरोध विफल रहा।");
+    }
+  }
+
+  loadDashboard();
+</script>
+</body>
+</html>
 
