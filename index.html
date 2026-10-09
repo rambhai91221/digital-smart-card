@@ -112,6 +112,11 @@
       margin-top: 0.5rem;
     }
 
+    button.btn-submit:disabled {
+      background: #94A3B8;
+      cursor: not-allowed;
+    }
+
     /* Payment Split Preview Box */
     .split-box {
       background: #F8FAFC;
@@ -250,7 +255,7 @@
         <label id="lbl-ref">रेफरल कोड (ऐच्छिक)</label>
         <input type="text" id="referredBy" placeholder="SDCXXXXXX">
       </div>
-      <button type="submit" class="btn-submit" id="btn-pay">₹21 भुगतान विकल्प चुनें</button>
+      <button type="submit" id="submitBtn" class="btn-submit" id="btn-pay">₹21 भुगतान विकल्प चुनें</button>
     </form>
   </div>
 
@@ -374,7 +379,7 @@
     document.getElementById('lbl-designation').innerText = lang.designation;
     document.getElementById('lbl-company').innerText = lang.company;
     document.getElementById('lbl-ref').innerText = lang.ref;
-    document.getElementById('btn-pay').innerText = lang.payBtn;
+    document.getElementById('submitBtn').innerText = lang.payBtn;
     document.getElementById('txt-info').innerText = lang.infoTxt;
     document.getElementById('split-heading').innerText = lang.splitHeading;
     document.getElementById('txt-admin').innerText = lang.adminTxt;
@@ -398,6 +403,10 @@
   document.getElementById('regForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerText = "सर्वर से कनेक्ट हो रहा है, कृपया प्रतीक्षा करें...";
+
     currentPayload = {
       fullName: document.getElementById('name').value,
       email: document.getElementById('email').value,
@@ -409,7 +418,6 @@
     };
 
     try {
-      // 1. बैकएंड पर रजिस्ट्रेशन डेटा भेजें
       const res = await fetch('https://digital-smart-card.onrender.com/api/create-card', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -419,25 +427,28 @@
       const data = await res.json();
       
       if (data.success) {
-        // अपलाइन कमीशन डायनेमिक रूप से अपडेट करें
         const targetUplineUpi = data.paymentSplit?.uplineAllocation?.upi || 'Admin Pool';
         document.getElementById('uplineLabel').innerText = `अपलाइन कमीशन (${targetUplineUpi})`;
 
-        // बाइनेंस USDT BEP20 एड्रेस का QR कोड जनरेट करें
         const usdtQrApi = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(BINANCE_WALLET)}`;
         document.getElementById('usdtQr').src = usdtQrApi;
 
-        // दोनों बॉक्स दिखाएं
         document.getElementById('paymentSplit').style.display = 'block';
         document.getElementById('viewCardBtn').href = `card.html?id=${data.cardId}`;
         document.getElementById('paymentOptions').style.display = 'block';
 
+        submitBtn.disabled = false;
+        submitBtn.innerText = "₹21 भुगतान विकल्प सफलतापूर्वक लोड हो गए";
       } else {
         alert('त्रुटि (Error): ' + (data.message || 'डेटा सेव नहीं हुआ'));
+        submitBtn.disabled = false;
+        submitBtn.innerText = "₹21 भुगतान विकल्प चुनें";
       }
     } catch (err) {
       console.error('Connection Error:', err);
-      alert('सर्वर से कनेक्ट करने में समस्या आ रही है।');
+      alert('सर्वर सुस्त है या कनेक्ट नहीं हो पाया। कृपया 30 सेकंड बाद दोबारा कोशिश करें।');
+      submitBtn.disabled = false;
+      submitBtn.innerText = "₹21 भुगतान विकल्प चुनें";
     }
   });
 
